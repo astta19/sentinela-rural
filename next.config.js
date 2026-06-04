@@ -1,14 +1,13 @@
-const path = require('path');
-
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  webpack: (config) => {
-    config.resolve.alias = {
-      ...(config.resolve.alias || {}),
-      '@': path.resolve(__dirname),
-    };
-    return config;
+  experimental: {
+    nodeMiddleware: true,
   },
-};
+  images: {
+    remotePatterns: [
+      { protocol: 'https', hostname: '*.supabase.co' },
+    ],
+  },
+}
 
-module.exports = nextConfig;
+module.exports = nextConfig
