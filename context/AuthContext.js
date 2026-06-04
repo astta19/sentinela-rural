@@ -9,31 +9,31 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
   const [profile, setProfile] = useState(null)
   const [loading, setLoading] = useState(true)
-
-  // Instância única do client por render do Provider
   const supabase = useMemo(() => createClient(), [])
 
   async function fetchProfile(userId) {
-    const { data, error } = await supabase
+    const { data } = await supabase
       .from('profiles')
       .select('*')
       .eq('auth_user_id', userId)
       .single()
-    if (!error) setProfile(data)
+    if (data) setProfile(data)
+    return data
   }
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      setUser(user ?? null)
-      if (user) {
-        fetchProfile(user.id).finally(() => setLoading(false))
-      } else {
-        setLoading(false)
+    // Inicializa sessão uma única vez
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      const u = session?.user ?? null
+      setUser(u)
+      if (u) {
+        await fetchProfile(u.id)
       }
+      setLoading(false)
     })
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
+      async (event, session) => {
         const u = session?.user ?? null
         setUser(u)
         if (u) {
@@ -41,16 +41,18 @@ export function AuthProvider({ children }) {
         } else {
           setProfile(null)
         }
+        setLoading(false)
       }
     )
 
     return () => subscription.unsubscribe()
-  }, []) // supabase é estável via useMemo
+  }, [])
 
   const signOut = async () => {
     await supabase.auth.signOut()
     setUser(null)
     setProfile(null)
+    window.location.href = '/auth/login'
   }
 
   const isRole = (...roles) => roles.includes(profile?.role)
