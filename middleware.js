@@ -1,7 +1,5 @@
 import { updateSession } from '@/lib/supabase/middleware'
 
-export const runtime = 'nodejs'
-
 export async function middleware(request) {
   return await updateSession(request)
 }
