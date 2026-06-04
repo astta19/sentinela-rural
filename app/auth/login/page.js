@@ -8,7 +8,7 @@ import { createClient } from '@/lib/supabase/client'
 
 export default function LoginPage() {
   const router = useRouter()
-  const supabase = createClient()
+  const [supabase] = useState(() => createClient())
   const [form, setForm] = useState({ email: '', password: '' })
   const [showPass, setShowPass] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -26,11 +26,11 @@ export default function LoginPage() {
       return
     }
 
-    // Verificar status
+    // Busca o profile diretamente — não depende do AuthContext carregar
     const { data: { user } } = await supabase.auth.getUser()
     const { data: profile } = await supabase
       .from('profiles')
-      .select('status')
+      .select('status, role')
       .eq('auth_user_id', user.id)
       .single()
 
@@ -41,22 +41,21 @@ export default function LoginPage() {
       setError('Sua conta foi bloqueada. Entre em contato com o administrador.')
       setLoading(false)
     } else {
-      router.push('/dashboard')
-      router.refresh()
+      // Força navegação hard para garantir que o layout recarrega com sessão ativa
+      window.location.href = '/dashboard'
     }
   }
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4">
       <div className="w-full max-w-sm">
-        {/* Logo */}
         <div className="flex items-center gap-2.5 mb-8">
           <div className="w-9 h-9 bg-white rounded-lg flex items-center justify-center">
             <Shield size={18} className="text-black" />
           </div>
           <div>
             <p className="text-sm font-semibold text-text-primary leading-none">Sentinela Rural</p>
-            <p className="text-[11px] text-text-muted font-mono">IA MONITORING</p>
+            <p className="text-[11px] text-text-secondary font-mono">IA MONITORING</p>
           </div>
         </div>
 
@@ -90,7 +89,7 @@ export default function LoginPage() {
               <button
                 type="button"
                 onClick={() => setShowPass(p => !p)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-secondary"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary hover:text-text-primary"
               >
                 {showPass ? <EyeOff size={15} /> : <Eye size={15} />}
               </button>
